@@ -8,3 +8,9 @@ class JobStatus(str, Enum):
     running = 'running'
     completed = 'completed'
     failed = 'failed'
+class IntakeStatus(str, Enum):
+    open = 'open'
+    settled = 'settled'
+class IntakeRowStatus(str, Enum):
+    accepted = 'accepted'
+    quarantined = 'quarantined'

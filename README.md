@@ -6,6 +6,8 @@
 数据接入（JSON/CSV、字段验证、批次指纹）→ 参数化分析（异步 Python worker）→ 结果复核（指标、图形、明细、解释、批准）→ 定时分发（本地收件箱、CSV/JSON、SHA256）；另有业务总览和审计轨迹。
 三个贯穿全栈的实体：Dataset 数据批次、Job 分析任务、Report 分发计划；辅助 User、Audit、Delivery。
 
+供应商月表混有坏行时，不整单退回也不静默跳过，而是建立**接入清理单**（`#/intakes`）：受理时锁定原表与字段换算约定；逐行给出接纳或隔离原因；接纳件只写一次并生成可试算批次 Dataset，隔离件可修正重放（原行保留），资产冲突留待负责人裁决。并发编辑与结清只认一个决定；尚有隔离件不结清；中断后核对可恢复逐行去向且不重复建批；原行数始终等于接纳数加隔离数。
+
 ## 快速启动
 ```bash
 cp .env.example .env
@@ -25,6 +27,7 @@ docker compose exec -T backend python -m scripts.seed_demo
 ## 技术与本地开发
 Python 3.12 / FastAPI / SQLAlchemy / NumPy / SciPy / scikit-learn；PostgreSQL 16；Redis 7；Nginx；原生 HTML CSS JavaScript ES modules（用户指定）。后端所有校验、持久化和算法在服务端。无前端打包步骤。
 后端：安装 backend/requirements.txt，设置 DATABASE_URL、REDIS_URL、JWT_SECRET、ARTIFACT_DIR 后在 backend/ 执行 `python -m migrations.initial`、`python -m scripts.seed_demo`、`uvicorn src.main:app`，另开 `python -m src.worker`。前端使用带 /api 反向代理的 Nginx，直接打开 index.html 不支持 API。
+接入清理单的规则校验可在 SQLite 下独立运行：`cd backend && python tests/test_intake_rules.py`（覆盖逐行去向、重放、资产冲突裁决、并发决定、中断恢复、结清与行数核对）。
 
 ## 目录与工程约定
 backend/src/{models,schemas,services,routes,controllers,middlewares,constants,config,utils}；backend/scripts/seed_demo.py；backend/migrations/initial.py。
